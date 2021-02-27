@@ -13,6 +13,19 @@ type psqlUserRepository struct {
 	DB *pg.DB
 }
 
+func (u *psqlUserRepository) Fetch(ctx context.Context, limit, offset int) (res []domain.User, err error) {
+	var users []domain.User
+	err = u.DB.Model(&users).
+		Column("id", "name", "email").
+		Order("created_at ASC").
+		Limit(limit).Offset(offset).Select()
+
+	if err != nil {
+		logrus.Warnln(err)
+		return nil, err
+	}
+	return users, nil
+}
 
 func (u *psqlUserRepository) CreateUser(ctx context.Context, usr *domain.User) error {
 	_, err := u.DB.Model(usr).Insert()

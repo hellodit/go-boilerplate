@@ -14,16 +14,15 @@ import (
 	"os/signal"
 	"time"
 
-	_userHttDelivery "go-boilerplate/user/delivery/http"
-	_userPostgreRepository "go-boilerplate/user/repository/postgresql"
-	_userUsecase "go-boilerplate/user/usecase"
 	_articleHttpDelivery "go-boilerplate/article/delivery/http"
 	_articlePostgreRepository "go-boilerplate/article/repository/postgresql"
 	_articleUsecase "go-boilerplate/article/usecase"
-
+	_userHttDelivery "go-boilerplate/user/delivery/http"
+	_userPostgreRepository "go-boilerplate/user/repository/postgresql"
+	_userUsecase "go-boilerplate/user/usecase"
 )
 
-func init(){
+func init() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yml")
@@ -34,13 +33,12 @@ func init(){
 	}
 }
 
-func main(){
+func main() {
 	server := &http.Server{
-		Addr: ":"+viper.GetString("app_port"),
-		ReadTimeout: time.Duration(viper.GetInt("READ_TIMEOUT")) * time.Second,
+		Addr:         ":" + viper.GetString("app_port"),
+		ReadTimeout:  time.Duration(viper.GetInt("READ_TIMEOUT")) * time.Second,
 		WriteTimeout: time.Duration(viper.GetInt("WRITE_TIMEOUT")) * time.Second,
 	}
-
 
 	postgreSQL := postgresql.Connect()
 
@@ -55,7 +53,6 @@ func main(){
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-
 	CustomMiddleware := MiddlewareCustom.Init()
 	e.HTTPErrorHandler = CustomMiddleware.ErrorHandler
 	MiddlewareCustom.Logger = logrus.New()
@@ -63,7 +60,7 @@ func main(){
 	e.Use(MiddlewareCustom.Hook())
 
 	go func() {
-		if err := e.StartServer(server) ; err != nil{
+		if err := e.StartServer(server); err != nil {
 			e.Logger.Info("Shutting down the server")
 		}
 	}()
@@ -76,11 +73,9 @@ func main(){
 	userUsecase := _userUsecase.NewUserUsecase(userRepo, timeoutCtx)
 	_userHttDelivery.NewUserHandler(e, userUsecase)
 
-
 	articleRepo := _articlePostgreRepository.NewPsqlArticleRepository(postgreSQL)
 	articleUsecase := _articleUsecase.NewArticleUsecase(articleRepo, timeoutCtx)
 	_articleHttpDelivery.NewArticleHandler(e, articleUsecase)
-
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)

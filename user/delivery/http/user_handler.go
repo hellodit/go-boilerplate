@@ -9,6 +9,7 @@ import (
 	"go-boilerplate/helper"
 	"go-boilerplate/middleware"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -16,8 +17,8 @@ type userHandler struct {
 	userUsecase domain.UserUseCase
 }
 
-func NewUserHandler(e *echo.Echo, UserUsecase domain.UserUseCase){
-	handler :=  &userHandler{
+func NewUserHandler(e *echo.Echo, UserUsecase domain.UserUseCase) {
+	handler := &userHandler{
 		userUsecase: UserUsecase,
 	}
 	user := e.Group("/user")
@@ -26,6 +27,29 @@ func NewUserHandler(e *echo.Echo, UserUsecase domain.UserUseCase){
 	user.POST("/register", handler.RegisterHandler)
 	user.POST("/login", handler.LoginHandler)
 	user.GET("/profile", handler.ProfileHandler, customMiddleware.Auth)
+	user.GET("/fetch", handler.UsersHandler)
+}
+
+func (u userHandler) UsersHandler(e echo.Context) error {
+	ctx := e.Request().Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	offset, _ := strconv.Atoi(e.QueryParam("offset"))
+	limit, _ := strconv.Atoi(e.QueryParam("limit"))
+
+	res, err := u.userUsecase.Fetch(ctx, limit, offset)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+	}
+
+	return e.JSON(http.StatusOK, map[string]interface{}{
+		"status": "success",
+		"data":   res,
+	})
+
 }
 
 func (u userHandler) RegisterHandler(e echo.Context) error {

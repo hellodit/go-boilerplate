@@ -32,10 +32,12 @@ type UserRepository interface {
 	Update(ctx context.Context, usr *User) error
 	Find(ctx context.Context, id uuid.UUID) (user *User, err error)
 	FindBy(ctx context.Context, key, value string) (user *User, err error)
+	Fetch(ctx context.Context, limit, offset int) (res []User, err error)
 }
 
 //UserUseCase interface
 type UserUseCase interface {
 	Register(ctx context.Context, usr *User) error
 	Login(ctx context.Context, credential *Credential) (res interface{}, err error)
+	Fetch(ctx context.Context, limit, offset int) (res interface{}, err error)
 }
